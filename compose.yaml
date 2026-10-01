@@ -1,0 +1,92 @@
+# Define the services/containers to be run
+services:
+
+  # Frontend service
+  web:
+    # Start the API service before the frontend
+    depends_on:
+      - api
+
+    # Build the frontend image from ./frontend
+    build: ./frontend
+
+    # Host port : Container port
+    ports:
+      - "5173:5173"
+
+    # Environment variables available inside the frontend container
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+    # Docker Compose Watch configuration
+    develop:
+      watch:
+
+        # Rebuild if package.json changes
+        - path: ./frontend/package.json
+          action: rebuild
+
+        # Rebuild if package-lock.json changes
+        - path: ./frontend/package-lock.json
+          action: rebuild
+
+        # Sync frontend code changes into /app
+        - path: ./frontend
+          target: /app
+          action: sync
+
+
+  # Backend/API service
+  api:
+
+    # Start MongoDB before the API
+    depends_on:
+      - db
+
+    # Build backend image from ./backend
+    build: ./backend
+
+    # Host port : Container port
+    ports:
+      - "8000:8000"
+
+    # Environment variables available inside backend container
+    environment:
+      DB_URL: mongodb://db/anime
+
+    # Docker Compose Watch configuration
+    develop:
+      watch:
+
+        # Rebuild if package.json changes
+        - path: ./backend/package.json
+          action: rebuild
+
+        # Rebuild if package-lock.json changes
+        - path: ./backend/package-lock.json
+          action: rebuild
+
+        # Sync backend code changes into /app
+        - path: ./backend
+          target: /app
+          action: sync
+
+
+  # MongoDB service
+  db:
+
+    # Use MongoDB 7.0 instead of latest
+    image: mongo:7.0.43
+
+    # MongoDB port
+    ports:
+      - "27017:27017"
+
+    # Persist MongoDB data
+    volumes:
+      - anime:/data/db
+
+
+# Define the named volume
+volumes:
+  anime:
